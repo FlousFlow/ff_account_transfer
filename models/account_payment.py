@@ -128,5 +128,32 @@ class AccountPayment(models.Model):
 class AccountJournal(models.Model):
     _inherit = 'account.journal'
 
+    def _get_dashboard_liquidity_account_ids(self):
+        """Return the ledger accounts that define this journal's balance."""
+        self.ensure_one()
+        accounts = self.default_account_id
+        accounts |= self.inbound_payment_method_line_ids.payment_account_id
+        accounts |= self.outbound_payment_method_line_ids.payment_account_id
+        return accounts
+
+    def _get_net_dashboard_balance(self):
+        self.ensure_one()
+        accounts = self._get_dashboard_liquidity_account_ids()
+        if not accounts:
+            return 0.0
+        lines = self.env['account.move.line'].search([
+            ('account_id', 'in', accounts.ids),
+            ('parent_state', '=', 'posted'),
+            ('company_id', '=', self.company_id.id),
+        ])
+        return sum(lines.mapped('balance'))
+
+    def _get_journal_dashboard_data_batched(self):
+        data = super()._get_journal_dashboard_data_batched()
+        for journal in self:
+            if journal.type in ('bank', 'cash') and journal.id in data:
+                data[journal.id]['account_balance'] = journal._get_net_dashboard_balance()
+        return data
+
     def create_internal_transfer(self):
         return self.open_payments_action('transfer', mode='form')
