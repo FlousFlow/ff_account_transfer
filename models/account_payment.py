@@ -134,6 +134,14 @@ class AccountJournal(models.Model):
         accounts = self.default_account_id
         accounts |= self.inbound_payment_method_line_ids.payment_account_id
         accounts |= self.outbound_payment_method_line_ids.payment_account_id
+        # Odoo may resolve the outstanding account from the company chart
+        # rather than storing it on the journal payment method line. Include
+        # the accounts actually used by this journal's posted payments.
+        accounts |= self.env['account.payment'].search([
+            ('journal_id', '=', self.id),
+            ('company_id', '=', self.company_id.id),
+            ('outstanding_account_id', '!=', False),
+        ]).mapped('outstanding_account_id')
         return accounts
 
     def _get_net_dashboard_balance(self):
