@@ -34,6 +34,20 @@
         </field>
     </record>
 
+    <record id="account_journal_dashboard_bank_cash_summary_inherit" model="ir.ui.view">
+        <field name="name">account.journal.dashboard.bank.cash.summary.inherit</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.account_journal_dashboard_kanban_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='dashboard_bank_cash_outstanding_balance']/.." position="attributes">
+                <attribute name="t-if">False</attribute>
+            </xpath>
+            <xpath expr="//div[@id='dashboard_bank_cash_misc_total']/.." position="attributes">
+                <attribute name="t-if">False</attribute>
+            </xpath>
+        </field>
+    </record>
+
     <record id="action_account_payments_transfer_custom" model="ir.actions.act_window">
         <field name="name">Internal Transfers</field>
         <field name="res_model">account.payment</field>
